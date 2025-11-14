@@ -27,9 +27,21 @@ export default function FavoritesList() {
   const fetchFavorites = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/favorites${user && user.id ? `?userId=${user.id}` : ''}`
-      );
+      // check current user session first
+      const me = await fetch('/api/auth/me');
+      const meJson = await me.json();
+      if (!meJson?.user) {
+        setFavorites([]);
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch('/api/favorites');
+      if (res.status === 401) {
+        setFavorites([]);
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
       setFavorites(data || []);
     } catch (err) {
@@ -59,22 +71,24 @@ export default function FavoritesList() {
   };
 
   const handleSaveCurrent = async () => {
-    // try to save current location from weather store
     const current = useWeatherStore.getState().currentWeather;
     if (!current) return;
     try {
-      const body = {
-        userId: user?.id,
-        city: current.city,
-        country: current.country,
-        latitude: current.latitude,
-        longitude: current.longitude,
-      };
       const res = await fetch('/api/favorites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          city: current.city,
+          country: current.country,
+          latitude: current.latitude,
+          longitude: current.longitude,
+        }),
       });
+      if (res.status === 401) {
+        // user not authenticated
+        window.location.href = '/settings';
+        return;
+      }
       const saved = await res.json();
       setFavorites((s) => [saved, ...s]);
     } catch (err) {
@@ -95,7 +109,16 @@ export default function FavoritesList() {
 
       <div className="grid grid-cols-1 gap-2">
         {favorites.length === 0 && !loading && (
-          <Card className="p-3 text-sm text-gray-500">No favorites yet</Card>
+          user ? (
+            <Card className="p-3 text-sm text-gray-500">No favorites yet</Card>
+          ) : (
+            <Card className="p-3 text-sm text-gray-500 flex items-center justify-between">
+              <div>Log in to save and view favorites.</div>
+              <div>
+                <a href="/settings" className="text-blue-600 underline">Sign in</a>
+              </div>
+            </Card>
+          )
         )}
 
         {favorites.map((f) => (
