@@ -13,6 +13,7 @@ import dynamic from 'next/dynamic';
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 import ThemeToggle from '@/components/ThemeToggle';
 import Link from 'next/link';
+import { useSession, signIn, signOut } from 'next-auth/react';
 import UVChart from '@/components/UVChart';
 import FavoritesList from '@/components/FavoritesList';
 
@@ -51,6 +52,8 @@ export default function Home() {
     setMounted(true);
     getGeolocation();
   }, []);
+
+  const { data: session } = useSession();
 
   useEffect(() => {
     if (latitude && longitude) {
@@ -208,10 +211,22 @@ export default function Home() {
           <p className="text-gray-600 text-lg">
             Beautiful real-time weather for your location
           </p>
-          <div className="mt-3 flex items-center justify-center gap-2">
+          <div className="mt-3 flex items-center justify-center gap-4">
             <Link href="/settings">
               <a className="text-sm text-blue-600 underline">Settings</a>
             </Link>
+            {session?.user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">{session.user.email}</span>
+                <Button size="sm" variant="outline" onClick={() => signOut()}>
+                  Sign out
+                </Button>
+              </div>
+            ) : (
+              <Button size="sm" onClick={() => signIn()}>
+                Sign in
+              </Button>
+            )}
           </div>
         </motion.div>
 

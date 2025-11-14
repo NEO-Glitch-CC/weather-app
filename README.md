@@ -54,6 +54,24 @@ DATABASE_URL=your_postgresql_connection_string
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
+### NextAuth / Authentication (optional but recommended)
+To enable login with GitHub or Email (magic links) you should add these environment variables to your `.env.local`:
+
+```
+NEXTAUTH_SECRET=replace-with-a-secure-random-string
+# GitHub OAuth (optional)
+GITHUB_ID=your_github_oauth_client_id
+GITHUB_SECRET=your_github_oauth_client_secret
+
+# Email provider (optional, for magic links)
+EMAIL_SERVER=smtp://USER:PASSWORD@smtp.example.com:587
+EMAIL_FROM="Weather App" <no-reply@example.com>
+```
+
+Notes:
+- If you don't configure providers, a simple email credentials provider UI is still available for quick demo sign-ins.
+- Make sure `NEXTAUTH_SECRET` is set in production to secure session cookies and tokens.
+
 3. **Setup database**
 ```bash
 npx prisma migrate dev
