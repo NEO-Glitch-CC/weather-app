@@ -5,7 +5,7 @@ import { Cloud, CloudRain, Sun, Wind, Droplets, Eye, Gauge } from 'lucide-react'
 import { Card } from '@/components/ui/card';
 import { useUIStore } from '@/store/uiStore';
 import UVIndicator from './UVIndicator';
-import WeatherAnimations from './WeatherAnimations';
+import WeatherCanvas from './WeatherCanvas';
 
 interface WeatherDetailProps {
   temperature: number;
@@ -64,7 +64,7 @@ export function WeatherDetail({
       animate="visible"
     >
       <div className="relative">
-        <WeatherAnimations icon={icon} />
+        <WeatherCanvas icon={icon} />
       </div>
       {/* Main Weather Display */}
       <motion.div variants={itemVariants}>
