@@ -1,0 +1,15 @@
+'use client';
+
+import { motion } from 'framer-motion';
+
+export function LoadingAnimation() {
+  return (
+    <motion.div className="flex justify-center items-center min-h-screen">
+      <motion.div
+        className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+      />
+    </motion.div>
+  );
+}
