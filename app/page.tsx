@@ -12,7 +12,9 @@ import { MapPin, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 import ThemeToggle from '@/components/ThemeToggle';
+import Link from 'next/link';
 import UVChart from '@/components/UVChart';
+import FavoritesList from '@/components/FavoritesList';
 
 interface SearchResultItem {
   id: number;
@@ -206,6 +208,11 @@ export default function Home() {
           <p className="text-gray-600 text-lg">
             Beautiful real-time weather for your location
           </p>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <Link href="/settings">
+              <a className="text-sm text-blue-600 underline">Settings</a>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Controls: unit, forecast days, theme, manual refresh */}
@@ -303,6 +310,11 @@ export default function Home() {
             ))}
           </motion.div>
         )}
+
+        {/* Favorites */}
+        <div className="mb-8">
+          <FavoritesList />
+        </div>
 
         {/* Current Weather Display */}
         {loading && <LoadingAnimation />}

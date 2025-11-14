@@ -56,3 +56,13 @@ model WeatherCache {
   data      String    // JSON stringified weather data
   updatedAt DateTime  @updatedAt
 }
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String?  // optional to support guest favorites
+  city      String
+  country   String?
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+}
