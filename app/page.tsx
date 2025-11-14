@@ -12,6 +12,7 @@ import { MapPin, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 import ThemeToggle from '@/components/ThemeToggle';
+import UVChart from '@/components/UVChart';
 
 interface SearchResultItem {
   id: number;
@@ -157,22 +158,35 @@ export default function Home() {
   if (!mounted) return null;
 
   const getBackgroundClass = () => {
-    if (!currentWeather) return 'bg-slate-50';
+    if (!currentWeather) return { class: 'bg-slate-50', image: null };
     const icon = currentWeather.icon || '';
-    if (icon.includes('sun')) return 'bg-linear-to-br from-amber-200 to-sky-400';
+    if (icon.includes('sun')) return { class: '', image: '/backgrounds/sun.svg' };
     if (icon.includes('rain') || icon.includes('cloud-rain'))
-      return 'bg-linear-to-br from-slate-700 to-blue-800 text-white';
+      return { class: '', image: '/backgrounds/rain.svg' };
     if (icon.includes('snow') || icon.includes('cloud-snow'))
-      return 'bg-linear-to-br from-sky-100 to-blue-200';
+      return { class: '', image: '/backgrounds/snow.svg' };
     if (icon.includes('fog') || icon.includes('cloud-fog'))
-      return 'bg-linear-to-br from-gray-400 to-gray-600 text-white';
+      return { class: '', image: '/backgrounds/fog.svg' };
     if (icon.includes('lightning') || icon.includes('cloud-lightning'))
-      return 'bg-linear-to-br from-purple-800 to-indigo-900 text-white';
-    return 'bg-linear-to-br from-blue-500 to-cyan-600 text-white';
+      return { class: '', image: '/backgrounds/thunder.svg' };
+    return { class: '', image: '/backgrounds/sun.svg' };
   };
 
+  const bg = getBackgroundClass();
+
   return (
-    <main className={`min-h-screen py-8 px-4 md:px-8 lg:px-16 ${getBackgroundClass()}`}>
+    <main
+      className={`min-h-screen py-8 px-4 md:px-8 lg:px-16 ${bg.class || ''}`}
+      style={
+        bg.image
+          ? {
+            backgroundImage: `url(${bg.image})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }
+          : undefined
+      }
+    >
       <motion.div
         className="max-w-6xl mx-auto"
         initial={{ opacity: 0, y: 20 }}
@@ -392,6 +406,10 @@ export default function Home() {
                 </motion.div>
               ))}
             </motion.div>
+            {/* UV Chart (if available) */}
+            <div className="mt-6">
+              <UVChart />
+            </div>
           </motion.div>
         )}
       </motion.div>

@@ -46,6 +46,7 @@ model Weather {
   longitude     Float
   sunrise       DateTime
   sunset        DateTime
+  uvIndex       Int?
   savedAt       DateTime  @default(now())
 }
 

@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
             longitude,
             sunrise: new Date(daily.sunrise[0]),
             sunset: new Date(daily.sunset[0]),
+            uvIndex: uvIndex ?? undefined,
           },
         });
       } catch (dbError) {
