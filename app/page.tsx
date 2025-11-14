@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useWeatherStore } from '@/store/weatherStore';
 import { useLocationStore } from '@/store/locationStore';
+import { useUIStore } from '@/store/uiStore';
 import { LoadingAnimation } from '@/components/LoadingAnimation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, RefreshCw } from 'lucide-react';
+import dynamic from 'next/dynamic';
+const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
 
 interface SearchResultItem {
   id: number;
@@ -27,6 +30,7 @@ export default function Home() {
 
   const { setCurrentWeather, setLoading, setError, currentWeather, loading } =
     useWeatherStore();
+  const { forecastDays, unit, refreshIntervalMinutes, toggleUnit, setForecastDays } = useUIStore();
   const {
     latitude,
     longitude,
@@ -36,6 +40,8 @@ export default function Home() {
     setCityCountry,
     error: locationError,
   } = useLocationStore();
+
+  const refreshRef = useRef<number | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -47,6 +53,24 @@ export default function Home() {
       fetchWeather(latitude, longitude);
     }
   }, [latitude, longitude]);
+
+  // Polling for realtime updates based on refreshIntervalMinutes
+  useEffect(() => {
+    if (!latitude || !longitude) return;
+    // clear previous
+    if (refreshRef.current) {
+      window.clearInterval(refreshRef.current);
+      refreshRef.current = null;
+    }
+    const ms = Math.max(1, refreshIntervalMinutes) * 60 * 1000;
+    const id = window.setInterval(() => {
+      fetchWeather(latitude, longitude);
+    }, ms);
+    refreshRef.current = id;
+    return () => {
+      if (refreshRef.current) window.clearInterval(refreshRef.current);
+    };
+  }, [latitude, longitude, refreshIntervalMinutes]);
 
   const getGeolocation = () => {
     setIsLoadingLocation(true);
@@ -67,7 +91,7 @@ export default function Home() {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/weather?lat=${lat}&lng=${lng}`
+        `/api/weather?lat=${lat}&lng=${lng}&days=${forecastDays}`
       );
       const data = await response.json();
 
@@ -90,6 +114,8 @@ export default function Home() {
           longitude: data.longitude,
           sunrise: data.sunrise,
           sunset: data.sunset,
+          uvIndex: data.uvIndex ?? null,
+          forecast: data.forecast ?? null,
         });
         setError(null);
       }
@@ -129,8 +155,23 @@ export default function Home() {
 
   if (!mounted) return null;
 
+  const getBackgroundClass = () => {
+    if (!currentWeather) return 'bg-slate-50';
+    const icon = currentWeather.icon || '';
+    if (icon.includes('sun')) return 'bg-linear-to-br from-amber-200 to-sky-400';
+    if (icon.includes('rain') || icon.includes('cloud-rain'))
+      return 'bg-linear-to-br from-slate-700 to-blue-800 text-white';
+    if (icon.includes('snow') || icon.includes('cloud-snow'))
+      return 'bg-linear-to-br from-sky-100 to-blue-200';
+    if (icon.includes('fog') || icon.includes('cloud-fog'))
+      return 'bg-linear-to-br from-gray-400 to-gray-600 text-white';
+    if (icon.includes('lightning') || icon.includes('cloud-lightning'))
+      return 'bg-linear-to-br from-purple-800 to-indigo-900 text-white';
+    return 'bg-linear-to-br from-blue-500 to-cyan-600 text-white';
+  };
+
   return (
-    <main className="min-h-screen py-8 px-4 md:px-8 lg:px-16">
+    <main className={`min-h-screen py-8 px-4 md:px-8 lg:px-16 ${getBackgroundClass()}`}>
       <motion.div
         className="max-w-6xl mx-auto"
         initial={{ opacity: 0, y: 20 }}
@@ -151,6 +192,38 @@ export default function Home() {
             Beautiful real-time weather for your location
           </p>
         </motion.div>
+
+        {/* Controls: unit, forecast days, manual refresh */}
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <Button size="sm" onClick={() => toggleUnit()}>
+            Unit: {unit === 'c' ? '°C' : '°F'}
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">Forecast days</label>
+            <select
+              value={forecastDays}
+              onChange={(e) => setForecastDays(parseInt(e.target.value, 10))}
+              className="px-3 py-2 rounded border"
+            >
+              {[3, 5, 7, 10, 14].map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              if (latitude && longitude) fetchWeather(latitude, longitude);
+            }}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+          </Button>
+        </div>
 
         {/* Search Bar */}
         <motion.form
@@ -258,6 +331,11 @@ export default function Home() {
                 </div>
               </motion.div>
             </Card>
+
+            {/* Map */}
+            <div className="my-6">
+              <MapView lat={currentWeather.latitude} lng={currentWeather.longitude} zoom={9} />
+            </div>
 
             {/* Weather Stats */}
             <motion.div

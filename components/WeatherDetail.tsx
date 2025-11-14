@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Cloud, CloudRain, Sun, Wind, Droplets, Eye, Gauge } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { useUIStore } from '@/store/uiStore';
 
 interface WeatherDetailProps {
   temperature: number;
@@ -13,6 +14,7 @@ interface WeatherDetailProps {
   icon: string;
   city: string;
   country: string;
+  uvIndex?: number | null;
 }
 
 export function WeatherDetail({
@@ -24,7 +26,14 @@ export function WeatherDetail({
   icon,
   city,
   country,
+  uvIndex = null,
 }: WeatherDetailProps) {
+  const unit = useUIStore((s) => s.unit);
+
+  const toDisplayTemp = (celsius: number) =>
+    unit === 'c' ? Math.round(celsius) : Math.round(celsius * 1.8 + 32);
+
+  const toDisplayWind = (kmh: number) => (unit === 'c' ? kmh : Math.round(kmh / 1.609));
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -54,7 +63,7 @@ export function WeatherDetail({
     >
       {/* Main Weather Display */}
       <motion.div variants={itemVariants}>
-        <Card className="p-8 bg-gradient-to-br from-blue-500 to-blue-600 text-white mb-6 overflow-hidden relative">
+        <Card className="p-8 bg-linear-to-br from-blue-500 to-blue-600 text-white mb-6 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
 
           <motion.div
@@ -70,9 +79,9 @@ export function WeatherDetail({
 
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-6xl font-bold mb-2">{temperature}°C</div>
+                <div className="text-6xl font-bold mb-2">{toDisplayTemp(temperature)}°{unit === 'c' ? 'C' : 'F'}</div>
                 <p className="text-blue-100 text-lg mb-2">{description}</p>
-                <p className="text-blue-100">Feels like {feelsLike}°C</p>
+                <p className="text-blue-100">Feels like {toDisplayTemp(feelsLike)}°{unit === 'c' ? 'C' : 'F'}</p>
               </div>
 
               <motion.div
@@ -116,7 +125,7 @@ export function WeatherDetail({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm font-medium">Wind Speed</p>
-                <p className="text-2xl font-bold mt-2">{windSpeed} km/h</p>
+                <p className="text-2xl font-bold mt-2">{toDisplayWind(windSpeed)} {unit === 'c' ? 'km/h' : 'mph'}</p>
               </div>
               <motion.div
                 animate={{ rotate: [0, 360] }}
@@ -134,7 +143,7 @@ export function WeatherDetail({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm font-medium">Temperature</p>
-                <p className="text-2xl font-bold mt-2">{temperature}°C</p>
+                <p className="text-2xl font-bold mt-2">{toDisplayTemp(temperature)}°{unit === 'c' ? 'C' : 'F'}</p>
               </div>
               <motion.div
                 animate={{ scale: [1, 1.1, 1] }}

@@ -16,6 +16,13 @@ export interface WeatherData {
   longitude: number;
   sunrise: string;
   sunset: string;
+  uvIndex?: number | null;
+  forecast?: Array<{
+    date: string;
+    tempMax: number;
+    tempMin: number;
+    uvIndexMax?: number | null;
+  }>;
 }
 
 interface WeatherStore {

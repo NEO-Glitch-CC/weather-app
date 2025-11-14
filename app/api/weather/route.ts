@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const latitude = parseFloat(searchParams.get('lat') || '0');
     const longitude = parseFloat(searchParams.get('lng') || '0');
+    const days = parseInt(searchParams.get('days') || '7', 10);
     const userId = searchParams.get('userId');
 
     if (latitude === 0 || longitude === 0) {
@@ -34,6 +35,20 @@ export async function GET(request: NextRequest) {
     const current = weatherData.current;
     const daily = weatherData.daily;
 
+    // determine current UV index if available
+    let uvIndex: number | null = null;
+    if (weatherData.hourly && weatherData.hourly.time && weatherData.hourly.uv_index) {
+      const now = new Date();
+      // Find nearest hourly index by matching date string prefix
+      const idx = weatherData.hourly.time.findIndex((t) => t.startsWith(now.toISOString().slice(0, 13)));
+      if (idx === -1) {
+        // fallback to first index
+        uvIndex = weatherData.hourly.uv_index[0] ?? null;
+      } else {
+        uvIndex = weatherData.hourly.uv_index[idx] ?? null;
+      }
+    }
+
     const response = {
       city,
       country,
@@ -43,16 +58,20 @@ export async function GET(request: NextRequest) {
       feelsLike: current.apparent_temperature,
       humidity: current.relative_humidity_2m,
       windSpeed: current.wind_speed_10m,
+      uvIndex,
       description: getWeatherDescription(current.weather_code),
       icon: getWeatherIcon(current.weather_code),
       pressure: 1013, // Open-Meteo doesn't provide pressure, using default
       sunrise: daily.sunrise[0],
       sunset: daily.sunset[0],
-      forecast: daily.time.map((time, idx) => ({
-        date: time,
-        tempMax: daily.temperature_2m_max[idx],
-        tempMin: daily.temperature_2m_min[idx],
-      })),
+      forecast: daily.time
+        .map((time, idx) => ({
+          date: time,
+          tempMax: daily.temperature_2m_max[idx],
+          tempMin: daily.temperature_2m_min[idx],
+          uvIndexMax: daily.uv_index_max ? daily.uv_index_max[idx] : null,
+        }))
+        .slice(0, Math.max(1, Math.min(days, daily.time.length))),
     };
 
     // Save to database if userId provided

@@ -19,12 +19,23 @@ export interface WeatherResponse {
     wind_speed_10m: number;
     wind_direction_10m: number;
   };
+  hourly?: {
+    time: string[];
+    temperature_2m?: number[];
+    relativehumidity_2m?: number[];
+    apparent_temperature?: number[];
+    precipitation?: number[];
+    weathercode?: number[];
+    wind_speed_10m?: number[];
+    uv_index?: number[];
+  };
   daily: {
     time: string[];
     sunrise: string[];
     sunset: string[];
     temperature_2m_max: number[];
     temperature_2m_min: number[];
+    uv_index_max?: number[];
   };
 }
 
@@ -78,7 +89,8 @@ const WMO_CODES: { [key: number]: string } = {
 
 export const getWeatherByCoordinates = async (
   latitude: number,
-  longitude: number
+  longitude: number,
+  days = 7
 ): Promise<WeatherResponse> => {
   try {
     const response = await axios.get<WeatherResponse>(
@@ -89,8 +101,11 @@ export const getWeatherByCoordinates = async (
           longitude,
           current:
             'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m',
-          daily: 'temperature_2m_max,temperature_2m_min,sunrise,sunset',
+          hourly:
+            'temperature_2m,relativehumidity_2m,apparent_temperature,precipitation,weathercode,wind_speed_10m,uv_index',
+          daily: 'temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max',
           timezone: 'auto',
+          // open-meteo returns a default number of daily entries; we'll slice on the server if needed
         },
       }
     );
