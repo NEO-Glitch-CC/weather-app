@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { MapPin, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface SearchResultItem {
   id: number;
@@ -193,11 +194,15 @@ export default function Home() {
           </p>
         </motion.div>
 
-        {/* Controls: unit, forecast days, manual refresh */}
+        {/* Controls: unit, forecast days, theme, manual refresh */}
         <div className="flex items-center justify-center gap-3 mb-6">
           <Button size="sm" onClick={() => toggleUnit()}>
             Unit: {unit === 'c' ? '°C' : '°F'}
           </Button>
+
+          <div>
+            <ThemeToggle />
+          </div>
 
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600">Forecast days</label>

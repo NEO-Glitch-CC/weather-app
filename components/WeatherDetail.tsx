@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Cloud, CloudRain, Sun, Wind, Droplets, Eye, Gauge } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useUIStore } from '@/store/uiStore';
+import UVIndicator from './UVIndicator';
+import WeatherAnimations from './WeatherAnimations';
 
 interface WeatherDetailProps {
   temperature: number;
@@ -61,6 +63,9 @@ export function WeatherDetail({
       initial="hidden"
       animate="visible"
     >
+      <div className="relative">
+        <WeatherAnimations icon={icon} />
+      </div>
       {/* Main Weather Display */}
       <motion.div variants={itemVariants}>
         <Card className="p-8 bg-linear-to-br from-blue-500 to-blue-600 text-white mb-6 overflow-hidden relative">
@@ -175,6 +180,10 @@ export function WeatherDetail({
           </Card>
         </motion.div>
       </motion.div>
+      {/* UV Indicator */}
+      <div className="mt-4">
+        <UVIndicator uvIndex={uvIndex ?? null} />
+      </div>
     </motion.div>
   );
 }
