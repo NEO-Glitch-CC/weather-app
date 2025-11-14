@@ -5,6 +5,7 @@ import { useUIStore } from '@/store/uiStore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUserStore } from '@/store/userStore';
+import { signIn, signOut, useSession } from 'next-auth/react';
 
 // Settings page also provides a simple email-only login for demo/auth
 
@@ -12,6 +13,7 @@ export default function SettingsPage() {
   const { unit, theme, forecastDays, refreshIntervalMinutes, animationsEnabled, setUnit, setTheme, setForecastDays, setRefreshInterval, setAnimationsEnabled } = useUIStore();
   const setUser = useUserStore((s) => s.setUser);
   const user = useUserStore((s) => s.user);
+  const { data: session, status } = useSession();
 
   const [email, setEmail] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
@@ -31,44 +33,29 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    // fetch current session
-    (async () => {
-      try {
-        const res = await fetch('/api/auth/me');
-        const json = await res.json();
-        if (json?.user) setUser(json.user);
-      } catch (err) {
-        // ignore
-      }
-    })();
+    if (session?.user) {
+      // mirror into userStore for legacy components
+      setUser({ id: (session.user as any).id, email: session.user.email || '', firstName: '', lastName: '' });
+    } else {
+      setUser(null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [session]);
 
   const handleLogin = async () => {
     if (!email) return;
     setLoginLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const json = await res.json();
-      if (json?.user) setUser(json.user);
-    } catch (err) {
-      console.error('Login failed', err);
+      // use NextAuth credentials provider
+      await signIn('credentials', { email, redirect: false });
     } finally {
       setLoginLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-    } catch (err) {
-      console.error('Logout failed', err);
-    }
+    await signOut({ redirect: false });
+    setUser(null);
   };
 
   return (
@@ -79,10 +66,10 @@ export default function SettingsPage() {
         <Card className="p-6 mb-4">
           <div className="mb-4">
             <h3 className="text-lg font-medium mb-2">Account</h3>
-            {user ? (
+            {session?.user ? (
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium">{user.email}</div>
+                  <div className="font-medium">{session.user.email}</div>
                 </div>
                 <div>
                   <Button size="sm" variant="outline" onClick={handleLogout}>Logout</Button>

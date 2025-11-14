@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { useUserStore } from '@/store/userStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useWeatherStore } from '@/store/weatherStore';
+import { useSession, signIn } from 'next-auth/react';
 
 interface Favorite {
   id: string;
@@ -18,6 +19,7 @@ interface Favorite {
 
 export default function FavoritesList() {
   const user = useUserStore((s) => s.user);
+  const { data: session } = useSession();
   const { setLocation, setCityCountry } = useLocationStore();
   const { setCurrentWeather } = useWeatherStore();
 
@@ -27,10 +29,7 @@ export default function FavoritesList() {
   const fetchFavorites = async () => {
     setLoading(true);
     try {
-      // check current user session first
-      const me = await fetch('/api/auth/me');
-      const meJson = await me.json();
-      if (!meJson?.user) {
+      if (!session?.user) {
         setFavorites([]);
         setLoading(false);
         return;
@@ -73,6 +72,10 @@ export default function FavoritesList() {
   const handleSaveCurrent = async () => {
     const current = useWeatherStore.getState().currentWeather;
     if (!current) return;
+    if (!session?.user) {
+      signIn();
+      return;
+    }
     try {
       const res = await fetch('/api/favorites', {
         method: 'POST',
@@ -84,11 +87,6 @@ export default function FavoritesList() {
           longitude: current.longitude,
         }),
       });
-      if (res.status === 401) {
-        // user not authenticated
-        window.location.href = '/settings';
-        return;
-      }
       const saved = await res.json();
       setFavorites((s) => [saved, ...s]);
     } catch (err) {

@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
+
+async function getUserIdFromRequest(request: NextRequest) {
+  const token =
+    request.cookies.get('__Secure-next-auth.session-token')?.value ||
+    request.cookies.get('next-auth.session-token')?.value ||
+    request.cookies.get('__Secure-next-auth.callback-url')?.value ||
+    null;
+
+  if (!token) return null;
+  const session = await prisma.session.findUnique({ where: { sessionToken: token } });
+  if (!session) return null;
+  return session.userId;
+}
 
 export async function GET(request: NextRequest) {
   try {
-    // require auth cookie and return only favorites for the logged-in user
-    const cookie = request.cookies.get('auth')?.value;
-    if (!cookie) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const payload = verifyToken(cookie);
-    if (!payload || !(payload as any).id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const userId = String((payload as any).id);
+    // require next-auth session and return only favorites for the logged-in user
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const favorites = await prisma.favorite.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -27,10 +34,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const cookie = request.cookies.get('auth')?.value;
-    if (!cookie) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    const payload = verifyToken(cookie);
-    if (!payload || !(payload as any).id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
     const { city, country, latitude, longitude } = body;
@@ -38,10 +43,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'city, latitude, longitude required' }, { status: 400 });
     }
 
-    const userId = String((payload as any).id);
+    const uid = String(userId);
     const fav = await prisma.favorite.create({
       data: {
-        userId,
+        userId: uid,
         city,
         country: country || undefined,
         latitude: Number(latitude),
@@ -58,16 +63,12 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const cookie = request.cookies.get('auth')?.value;
-    if (!cookie) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    const payload = verifyToken(cookie);
-    if (!payload || !(payload as any).id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
-
-    const userId = String((payload as any).id);
     // ensure favorite belongs to the user
     const fav = await prisma.favorite.findUnique({ where: { id } });
     if (!fav || fav.userId !== userId) return NextResponse.json({ error: 'Not found' }, { status: 404 });
