@@ -32,14 +32,14 @@ export default function LandingHero() {
         className="flex items-center justify-center gap-4"
       >
         <Link href="/">
-          <a className="rounded-full bg-blue-600 text-white px-6 py-3 font-semibold shadow hover:shadow-lg transition">
+          <div className="rounded-full bg-blue-600 text-white px-6 py-3 font-semibold shadow hover:shadow-lg transition">
             Try the App
-          </a>
+          </div>
         </Link>
         <Link href="/docs">
-          <a className="rounded-full border border-gray-200 dark:border-slate-700 px-6 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 transition">
+          <div className="rounded-full border border-gray-200 dark:border-slate-700 px-6 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 transition">
             Read Docs
-          </a>
+          </div>
         </Link>
       </motion.div>
 

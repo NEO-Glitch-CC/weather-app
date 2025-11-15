@@ -18,13 +18,13 @@ export default function Header() {
           className="flex items-center gap-3"
         >
           <Link href="/landing">
-            <a className="text-xl font-bold">Weather<span className="text-blue-500">.</span></a>
+            <div className="text-xl font-bold">Weather<span className="text-blue-500">.</span></div>
           </Link>
           <nav className="hidden md:flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
-            <Link href="/landing"><a className="hover:underline">Home</a></Link>
-            <Link href="/docs"><a className="hover:underline">Docs</a></Link>
-            <Link href="/about"><a className="hover:underline">About</a></Link>
-            <Link href="/source"><a className="hover:underline">Source</a></Link>
+            <Link href="/landing"><div className="hover:underline">Home</div></Link>
+            <Link href="/docs"><div className="hover:underline">Docs</div></Link>
+            <Link href="/about"><div className="hover:underline">About</div></Link>
+            <Link href="/source"><div className="hover:underline">Source</div></Link>
           </nav>
         </motion.div>
 

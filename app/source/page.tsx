@@ -16,7 +16,7 @@ export default function SourcePage() {
           <h2 className="font-semibold mb-2">Repository</h2>
           <p className="mb-4 text-gray-700">Browse the source, open issues, or contribute on GitHub.</p>
           <Link href="https://github.com/NEO-Glitch-CC/weather-app">
-            <a className="text-blue-600 hover:underline">https://github.com/NEO-Glitch-CC/weather-app</a>
+            <div className="text-blue-600 hover:underline">https://github.com/NEO-Glitch-CC/weather-app</div>
           </Link>
         </div>
       </div>
