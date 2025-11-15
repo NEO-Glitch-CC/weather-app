@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,15 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error || 'Login failed');
       } else if (result?.ok) {
+        // Ensure the client session is available before redirecting.
+        // Sometimes NextAuth sets cookies but the client state isn't updated
+        // immediately; calling getSession forces a refresh.
+        try {
+          await getSession();
+        } catch (e) {
+          // ignore — we'll still redirect even if session fetch fails
+          console.error('getSession after signIn failed', e);
+        }
         router.push('/');
       }
     } catch (err) {
