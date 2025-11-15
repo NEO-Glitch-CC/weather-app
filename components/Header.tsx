@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { Button } from './ui/button';
 import { motion } from 'framer-motion';
+import { useUserStore } from '@/store/userSessionStore';
 
 export default function Header() {
   const { data: session } = useSession();
@@ -32,7 +33,19 @@ export default function Header() {
           {session?.user ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <span className="text-sm mr-2 hidden sm:inline text-gray-700 dark:text-gray-200">{session.user.email}</span>
-              <Button size="sm" variant="ghost" onClick={() => signOut()}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  // clear local Zustand session first then sign out
+                  try {
+                    useUserStore.getState().logout();
+                  } catch (e) {
+                    // ignore
+                  }
+                  signOut({ callbackUrl: '/landing' });
+                }}
+              >
                 Sign out
               </Button>
             </motion.div>
